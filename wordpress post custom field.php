@@ -204,12 +204,22 @@ function rm_upcoming_events(){
     $args = array(
         'post_type'=>'event', 
         'post_status'=>'publish', 
-        'posts_per_page'=>3, 
+        'posts_per_page'=>4, 
         'orderby'=>'meta_value',
         'meta_key' => '_event_date',
-        'order'=>'ASC'
+        'order'=>'ASC',
+        'meta_query' => array(
+           
+            array(
+                    'key' => '_event_date',
+                 'value' => date('Y-m-d'), //value of "order-date" custom field
+                 'compare' => '>=', //show events greater than or equal to today
+                 'type' => 'DATE'
+                )
+            )
     );
 
+ 
     $query = new WP_Query($args);
     $content = '<div class="events-container">';
 
@@ -249,30 +259,4 @@ function rm_upcoming_events(){
   
 }
 
-<?php
-
-
-
-function rmvideos_post_types(){
-    register_post_type('video',[
-        'public' => true,
-        'labels' =>[
-            'name' => 'Videos',
-            'add_new_item' => 'Add New Video',
-            'edit_item' => 'Edit Video',
-            'all_items' => 'All Videos',
-            'singular_name' => 'Video'
-        ],
-        'menu_icon' => 'dashicons-videos',
-        'supports' => ['title','editor','thumbnail','revisions','custom-fields'],
-        'has_archive' => true,
-        'show_ui' => true,
-        'show_in_menu' => true,
-        'can_export' => true,
-        'has_archive' => true
-    ]);
-}
-
-
-add_action('init','rmvideos_post_types');
 
