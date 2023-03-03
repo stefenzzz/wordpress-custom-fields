@@ -1,6 +1,7 @@
 <?php
 
 
+
 // add rm events
 function rmevents_post_types(){
     register_post_type('event',[
@@ -196,7 +197,10 @@ add_action( 'save_post', 'save_post_meta_boxes' );
 
 
 
-add_shortcode('events-list', 'rm_upcoming_events');
+add_shortcode('events-upcoming', 'rm_upcoming_events');
+
+
+
 
 function rm_upcoming_events(){
     global $post;
@@ -204,17 +208,23 @@ function rm_upcoming_events(){
     $args = array(
         'post_type'=>'event', 
         'post_status'=>'publish', 
-        'posts_per_page'=>4, 
+        'posts_per_page'=>3, 
         'orderby'=>'meta_value',
         'meta_key' => '_event_date',
         'order'=>'ASC',
         'meta_query' => array(
-           
-            array(
-                    'key' => '_event_date',
-                 'value' => date('Y-m-d'), //value of "order-date" custom field
-                 'compare' => '>=', //show events greater than or equal to today
-                 'type' => 'DATE'
+                'relation' => 'OR',
+                array(
+                        'key' => '_event_date',
+                    'value' => date('Y-m-d'), //value of "order-date" custom field
+                    'compare' => '>=', //show events greater than or equal to today
+                    'type' => 'DATE'
+                    ),
+                array(
+                    'key' => '_event_until_date',
+                    'value' => date('Y-m-d'), //value of "order-date" custom field
+                    'compare' => '>=', //show events greater than or equal to today
+                    'type' => 'DATE'
                 )
             )
     );
@@ -224,6 +234,8 @@ function rm_upcoming_events(){
     $content = '<div class="events-container">';
 
     if($query->have_posts()):
+
+   
 		while($query->have_posts()): $query->the_post();
         $even_date = date_format(date_create(get_post_meta($post->ID, '_event_date', true)), 'F d, Y');
         $even_until_date = date_format(date_create(get_post_meta($post->ID, '_event_until_date', true)), 'F d, Y');
@@ -259,4 +271,89 @@ function rm_upcoming_events(){
   
 }
 
+add_shortcode('events-previous', 'rm_previous_events');
+function rm_previous_events(){
+    global $post;
 
+    $args = array(
+        'post_type'=>'event', 
+        'post_status'=>'publish', 
+        'posts_per_page'=>3, 
+        'orderby'=>'meta_value',
+        'meta_key' => '_event_date',
+        'order'=>'DESC',
+        'meta_query' => array(
+                array(
+                    'key' => '_event_until_date',
+                    'value' => date('Y-m-d'), //value of "order-date" custom field
+                    'compare' => '<=', //show events greater than or equal to today
+                    'type' => 'DATE'
+                )
+            )
+    );
+
+ 
+    $query = new WP_Query($args);
+    $content = '<div class="events-container">';
+
+    if($query->have_posts()):
+
+   
+		while($query->have_posts()): $query->the_post();
+        $even_date = date_format(date_create(get_post_meta($post->ID, '_event_date', true)), 'F d, Y');
+        $even_until_date = date_format(date_create(get_post_meta($post->ID, '_event_until_date', true)), 'F d, Y');
+        $date = $even_date.' - '.$even_until_date;
+        if($even_date === $even_until_date ){
+            $date = $even_date;
+        }
+       
+        
+        $content .= '<div class="event-post-container">
+        <div class="event-image-container">
+        <img src="'.get_the_post_thumbnail_url().'">
+        </div>
+        <div class="event-content-container">
+          <h3><a class="event-post-title" href="'.get_the_permalink().'">'.get_the_title().'</a></h3>
+          <span class="event-date">Date: '.$date.'</span>
+           <span class="event-Location">Location: '.get_post_meta($post->ID, '_event_location', true).'</span>
+                  <div class="button-wrapper">
+              <a href="'.get_the_permalink().'" class="event-view-more">View More</a>
+              <a class="event-view-album">View Album</a>
+              </div>  
+        </div>
+      </div>';
+    endwhile;
+    wp_reset_postdata();
+    else: 
+        _e('Sorry, nothing to display.', 'RMevents');
+    endif;
+    $content .= '</div>';
+  return $content;
+
+
+
+  
+}
+
+
+// videos.php file
+function rmvideos_post_types(){
+    register_post_type('video',[
+        'public' => true,
+        'labels' =>[
+            'name' => 'Videos',
+            'add_new_item' => 'Add New Video',
+            'edit_item' => 'Edit Video',
+            'all_items' => 'All Videos',
+            'singular_name' => 'Video'
+        ],
+        'menu_icon' => 'dashicons-format-video',
+        'supports' => ['title','editor','thumbnail','revisions','custom-fields'],
+        'has_archive' => true,
+        'show_ui' => true,
+        'show_in_menu' => true,
+        'can_export' => true,
+        'has_archive' => true
+    ]);
+}
+add_action('init','rmvideos_post_types');
